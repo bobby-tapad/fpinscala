@@ -6,7 +6,7 @@ import org.scalatest.matchers.should.Matchers
 
 
 
-class GameStateSpec extends AnyFlatSpec with Matchers {
+class GettingStartedSpec extends AnyFlatSpec with Matchers {
 
   it should "return the fibonacci sequence" in {
     val mod = MyModule
