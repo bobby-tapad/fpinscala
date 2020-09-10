@@ -117,12 +117,12 @@ object List { // `List` companion object. Contains functions for creating and wo
   //add 1 to a list of ints
   def addOne(l: List[Int]): List[Int] = foldRightTailRec(l, List[Int]())((x, y) => Cons(x + 1, y))
 
-  def doublesToStrings(l: List[Double]): List[String] = foldRightTailRec(l, List[String]())((x, y) => append(List(x.toString), y))
+  def doublesToStrings(l: List[Double]): List[String] = foldRightTailRec(l, List[String]())((x, y) => Cons(x.toString, y))
 
-  def map[A,B](l: List[A])(f: A => B): List[B] = foldRightTailRec(l, List[B]())((a, b) => append(List(f(a)), b))
+  def map[A,B](l: List[A])(f: A => B): List[B] = foldRightTailRec(l, List[B]())((a, b) => Cons(f(a), b))
 
   def filter[A](l: List[A])(f: A => Boolean): List[A] = foldRightTailRec(l, List[A]()) {
-    (a, b) => if (f(a)) append(List(a), b) else b
+    (a, b) => if (f(a)) Cons(a, b) else b
   }
 
   def flatMap[A, B](l: List[A])(f: A => List[B]): List[B] = foldRightTailRec(l, List[B]())((a, b) => append(f(a), b))
@@ -154,9 +154,9 @@ object List { // `List` companion object. Contains functions for creating and wo
 
     sub match {
       case Nil => true
-      case Cons(sh, st) => l match {
+      case Cons(_, _) => l match {
         case Nil => false
-        case Cons(lh, lt) => if (sh == lh && startsWith(sub, l)) true else hasSubsequence(lt, sub)
+        case Cons(_, lt) => if (startsWith(sub, l)) true else hasSubsequence(lt, sub)
       }
     }
   }
