@@ -8,6 +8,8 @@ import org.scalatest.matchers.should.Matchers
 
 class DataStructuresSpec extends AnyFlatSpec with Matchers {
 
+  //lists
+
   it should "return the tail of a list" in {
     val l = List(1, 2, 3, 4, 5)
     List.tail(l) shouldBe List(2, 3, 4, 5)
@@ -115,5 +117,40 @@ class DataStructuresSpec extends AnyFlatSpec with Matchers {
   it should "hasSubsequence" in {
     List.hasSubsequence(List(1, 2, 3, 5, 6, 9), List(3, 5)) shouldBe true
     List.hasSubsequence(List(1, 2, 3), List(2, 2)) shouldBe false
+  }
+
+  //trees
+  val tree: Tree[Int] = Branch(Branch(Leaf(4), Branch(Leaf(2), Leaf(1))), Leaf(3))
+
+  it should "get tree size" in {
+    Tree.size(tree) shouldBe 7
+  }
+
+  it should "get tree max" in {
+    Tree.maximum(tree) shouldBe 4
+  }
+
+  it should "get tree depth" in {
+    Tree.depth(tree) shouldBe 4
+  }
+
+  it should "tree map" in {
+    Tree.map(tree)(a => a + 1) shouldBe Branch(Branch(Leaf(5), Branch(Leaf(3), Leaf(2))), Leaf(4))
+  }
+
+  it should "get tree size with fold" in {
+    Tree.sizeFold(tree) shouldBe 7
+  }
+
+  it should "get tree max with fold" in {
+    Tree.maximumFold(tree) shouldBe 4
+  }
+
+  it should "get tree depth with fold" in {
+    Tree.depthFold(tree) shouldBe 4
+  }
+
+  it should "tree map with fold" in {
+    Tree.mapFold(tree)(a => a + 1) shouldBe Branch(Branch(Leaf(5), Branch(Leaf(3), Leaf(2))), Leaf(4))
   }
 }
