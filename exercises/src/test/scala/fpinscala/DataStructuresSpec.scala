@@ -117,6 +117,8 @@ class DataStructuresSpec extends AnyFlatSpec with Matchers {
   it should "hasSubsequence" in {
     List.hasSubsequence(List(1, 2, 3, 5, 6, 9), List(3, 5)) shouldBe true
     List.hasSubsequence(List(1, 2, 3), List(2, 2)) shouldBe false
+    List.hasSubsequence(List(3, 2, 3, 5, 6, 9), List(3, 5)) shouldBe true
+    List.hasSubsequence(List(3, 2, 1, 5, 6, 9), List(3, 5)) shouldBe false
   }
 
   //trees

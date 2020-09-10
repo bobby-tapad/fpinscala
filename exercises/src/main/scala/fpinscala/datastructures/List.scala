@@ -104,18 +104,18 @@ object List { // `List` companion object. Contains functions for creating and wo
   def productFL(ns: List[Double]) =
     foldLeft(ns, 1.0)(_ * _)
 
-  def reverse[A](l: List[A]): List[A] = foldLeft(l, List[A]())((y, x) => append(List.apply(y), x))
+  def reverse[A](l: List[A]): List[A] = foldLeft(l, List[A]())((y, x) => Cons(y, x))
 
   def foldRightTailRec[A,B](l: List[A], z: B)(f: (A, B) => B): B = foldLeft(reverse(l), z)(f)
 
   //append using fold
-  def appendFold[A](a1: List[A], a2: List[A]): List[A] = foldLeft(a2, a1)((x, y) => append(y, Cons(x, Nil)))
+  def appendFold[A](a1: List[A], a2: List[A]): List[A] = foldRight(a1, a2)((x, y) => Cons[A](x, y))
 
   //concat a list of lists
   def concatenate[A](ls: List[List[A]]): List[A] = foldLeft(ls, List[A]())((x, y) => appendFold(y, x))
 
   //add 1 to a list of ints
-  def addOne(l: List[Int]): List[Int] = foldRightTailRec(l, List[Int]())((x, y) => append(List(x + 1), y))
+  def addOne(l: List[Int]): List[Int] = foldRightTailRec(l, List[Int]())((x, y) => Cons(x + 1, y))
 
   def doublesToStrings(l: List[Double]): List[String] = foldRightTailRec(l, List[String]())((x, y) => append(List(x.toString), y))
 
@@ -143,11 +143,21 @@ object List { // `List` companion object. Contains functions for creating and wo
     case (Cons(h1, t1), Cons(h2, t2)) => Cons(f(h1, h2), zipWith(t1, t2)(f))
   }
 
-  def hasSubsequence[A](l: List[A], sub: List[A]): Boolean = sub match {
-    case Nil => true
-    case Cons(sh, st) => l match {
-      case Nil => false
-      case Cons(lh, lt) => if (sh == lh) hasSubsequence(lt, st) else hasSubsequence(lt, sub)
+  def hasSubsequence[A](l: List[A], sub: List[A]): Boolean = {
+    def startsWith(sub: List[A], l: List[A]): Boolean = sub match {
+      case Nil => true
+      case Cons(sh, st) => l match {
+        case Nil => false
+        case Cons(lh, lt) => if (sh == lh) startsWith(lt, st) else false
+      }
+    }
+
+    sub match {
+      case Nil => true
+      case Cons(sh, st) => l match {
+        case Nil => false
+        case Cons(lh, lt) => if (sh == lh && startsWith(sub, l)) true else hasSubsequence(lt, sub)
+      }
     }
   }
 }
