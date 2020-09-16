@@ -10,6 +10,7 @@ class ErrorHandlingSpec extends AnyFlatSpec with Matchers {
   it should "calculate variance" in {
     val s = Seq[Double](1.0, 3.0, 4.0, 6.0)
     Option.variance(s) shouldBe Some(3.25)
+    Option.variance2(s) shouldBe Some(3.25)
   }
 
   it should "get sequence" in {
@@ -20,5 +21,7 @@ class ErrorHandlingSpec extends AnyFlatSpec with Matchers {
     Option.sequence(l2) shouldBe None
     Option.sequence2(l1) shouldBe Some(List(1, 5, 3, 5))
     Option.sequence2(l2) shouldBe None
+    Option.sequence3(l1) shouldBe Some(List(1, 5, 3, 5))
+    Option.sequence3(l2) shouldBe None
   }
 }
