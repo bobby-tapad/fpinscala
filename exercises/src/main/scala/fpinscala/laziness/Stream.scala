@@ -30,14 +30,14 @@ trait Stream[+A] {
 
   //5.2
   def take(n: Int): Stream[A] = this match {
-    case _ if n == 0 => empty
     case Cons(h, _) if n == 1 => cons(h(), empty)
-    case Cons(h, t) => cons(h(), t().take(n - 1))
+    case Cons(h, t) if n > 1 => cons(h(), t().take(n - 1))
+    case _ => empty
   }
 
   //5.2
   def drop(n: Int): Stream[A] = this match {
-    case Cons(_, t) if n >= 1 => t().drop(n - 1)
+    case Cons(_, t) if n > 0 => t().drop(n - 1)
     case _ => this
   }
 
@@ -112,7 +112,7 @@ trait Stream[+A] {
 
   //5.15
   def tails: Stream[Stream[A]] = unfold (this) {
-    case Cons(h, t) => Some(Cons(h, t), t())
+    case Cons(h, t) => Some(cons[A](h(), t()), t())
     case Empty => None
   } append Stream(empty)
 

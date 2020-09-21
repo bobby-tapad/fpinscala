@@ -16,12 +16,14 @@ class LazinessSpec extends AnyFlatSpec with Matchers {
     Stream(1, 2, 3, 4).take(2).toList() shouldBe List(1, 2)
     Stream(1, 2, 3, 4).take(1).toList() shouldBe List(1)
     Stream(1, 2, 3, 4).take(0).toList() shouldBe Nil
+    Stream(1, 2, 3, 4).take(5).toList() shouldBe List(1, 2, 3, 4)
   }
 
   it should "drop" in {
     Stream(1, 2, 3, 4).drop(2).toList() shouldBe List(3, 4)
     Stream(1, 2, 3, 4).drop(1).toList() shouldBe List(2, 3, 4)
     Stream(1, 2, 3, 4).drop(0).toList() shouldBe List(1, 2, 3, 4)
+    Stream(1, 2, 3, 4).drop(10).toList() shouldBe Nil
   }
 
   it should "takewhile" in {
@@ -34,6 +36,9 @@ class LazinessSpec extends AnyFlatSpec with Matchers {
     Stream(1, 2, 3, 4).forAll(_ > 0) shouldBe true
     Stream.cons(1, Stream.cons(2, Stream.cons(-3, {throw new Exception(" :( ")}))).forAll(_ > 0) shouldBe false
     Stream(1, 2, -3, 4).forAll(_ > 0) shouldBe false
+
+    def nat(start: Int): Stream[Int] = Stream.cons(start, nat(start + 1))
+    nat(1).forAll(_ % 10 != 0) shouldBe false
   }
 
   it should "takewhile with foldright" in {
@@ -110,6 +115,7 @@ class LazinessSpec extends AnyFlatSpec with Matchers {
     Stream(1, 2, 3, 4).take2(2).toList() shouldBe List(1, 2)
     Stream(1, 2, 3, 4).take2(1).toList() shouldBe List(1)
     Stream(1, 2, 3, 4).take2(0).toList() shouldBe Nil
+    Stream(1, 2, 3, 4).take(5).toList() shouldBe List(1, 2, 3, 4)
   }
 
   it should "unfold takewhile" in {
@@ -149,5 +155,5 @@ class LazinessSpec extends AnyFlatSpec with Matchers {
   it should "tails" in {
     Stream(1, 2, 3).tails.map(_.toList()).toList() shouldBe List(List(1, 2, 3), List(2, 3), List(3), List())
   }
-  
+
 }
