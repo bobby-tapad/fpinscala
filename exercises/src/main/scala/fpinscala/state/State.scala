@@ -1,5 +1,7 @@
 package fpinscala.state
 
+import scala.annotation.tailrec
+
 
 trait RNG {
   def nextInt: (Int, RNG) // Should generate a random `Int`. We'll later define other functions in terms of `nextInt`.
@@ -35,7 +37,7 @@ object RNG {
   // when nextInt returns Int.MinValue, which doesn't have a negative counterpart
   def nonNegativeInt(rng: RNG): (Int, RNG) = {
     val (i, r) = rng.nextInt
-    if (i < 0) (-i + 1, r) else (i, r)
+    if (i < 0) (-(i + 1), r) else (i, r)
   }
 
   // 6.2
@@ -74,6 +76,18 @@ object RNG {
       val (l, r2) = ints(count - 1)(r1)
       (i :: l, r2)
     }
+  }
+
+  def ints2(count: Int)(rng: RNG): (List[Int], RNG) = {
+    def helper(count: Int, acc: List[Int], r1: RNG): (List[Int], RNG) = {
+      if (count <= 0) (acc, r1)
+      else {
+        val (i, r2) = r1.nextInt
+        helper(count - 1, i :: acc, r2)
+      }
+    }
+
+    helper(count, List(), rng)
   }
 
   // 6.5 use map to implement double
@@ -124,7 +138,7 @@ object RNG {
 // on the State case class where possible, otherwise on the companion object
 
 case class State[S,+A](run: S => (A, S)) {
-  def map[B](f: A => B): State[S, B] = flatMap(a => unit(f(a)))
+  def map[B](f: A => B): State[S, B] = flatMap(a => State.unit(f(a)))
 
   def map2[B,C](sb: State[S, B])(f: (A, B) => C): State[S, C] = flatMap(a => sb.map(b => f(a, b)))
 
@@ -132,12 +146,6 @@ case class State[S,+A](run: S => (A, S)) {
     val (a, s2) = run(s1)
     f(a).run(s2)
   })
-
-  def sequence[S,A](fs: List[State[S,A]]): State[S,List[A]] = {
-    fs.foldRight(unit[S, List[A]](List[A]()))((sa, sb) => sa.map2(sb)(_ :: _))
-  }
-
-  def unit[S,A](a: A): State[S,A] = State(s => (a, s))
 
 }
 
@@ -150,6 +158,12 @@ case class Machine(locked: Boolean, candies: Int, coins: Int)
 
 object State {
   type Rand[A] = State[RNG, A]
+
+  def sequence[S,A](fs: List[State[S,A]]): State[S,List[A]] = {
+    fs.foldRight(unit[S, List[A]](List[A]()))((sa, sb) => sa.map2(sb)(_ :: _))
+  }
+
+  def unit[S,A](a: A): State[S,A] = State(s => (a, s))
 
   // Inserting a coin into a locked machine will cause it to unlock
   // Turning the knob on an unlocked machine will dispense candy and become locked
