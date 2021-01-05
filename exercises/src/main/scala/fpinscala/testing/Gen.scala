@@ -39,13 +39,19 @@ object Gen {
   // the answer key uses State.sequence.  is that better?
   def listOfN[A](n: Int, g: Gen[A]): Gen[List[A]] = g.map((a: A) => List.fill(n)(a))
 
+  // 8.7
+  def double: Gen[Double] = Gen(State(RNG.double))
+
 }
 
-case class Gen[+A](sample: State[RNG,A]) {
+case class Gen[A](sample: State[RNG,A]) {
   def map[B](f: A => B): Gen[B] = ???
 
   // 8.6
-  def flatMap[B](f: A => Gen[B]): Gen[B] = ???
+  def flatMap[B](f: A => Gen[B]): Gen[B] = Gen(sample.flatMap(a => f(a).sample))
+
+  // 8.6
+  def listOfN[A](size: Gen[Int]): Gen[List[A]] = size.flatMap(s => this.flatMap(a => unit(List.fill(s)(a))))
 
   // 8.4
   def choose(start: Int, stopExclusive: Int): Gen[Int] = Gen(State(RNG.nonNegativeInt).map(n => start + n % (stopExclusive-start)))
@@ -54,6 +60,15 @@ case class Gen[+A](sample: State[RNG,A]) {
 
   def genToOption(gen: Gen[A]): Gen[Option[A]] = Gen(gen.sample.map(a => Option(a)))
 
+  // 8.7
+  def union[A](g1: Gen[A], g2: Gen[A]): Gen[A] = boolean.flatMap( b => if (b) g1 else g2 )
+
+  // 8.8
+  def weighted[A1](g1: (Gen[A], Double), g2: (Gen[A], Double)): Gen[A] = double flatMap {
+    d =>
+      val g1threshold = g1._2 / (g1._2 + g2._2)
+      if (d < g1threshold) g1._1 else g2._1
+  }
 
 }
 
