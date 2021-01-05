@@ -40,6 +40,11 @@ object RNG {
     if (i < 0) (-(i + 1), r) else (i, r)
   }
 
+  def boolean(rng: RNG): (Boolean, RNG) = {
+    val (i, r) = rng.nextInt
+    if (i % 2 == 0) (true, r) else (false, r)
+  }
+
   // 6.2
   // Generate a double between 0 and 1, not including 1.  Use Int.MaxValue and _.toDouble
   def double(rng: RNG): (Double, RNG) = {
