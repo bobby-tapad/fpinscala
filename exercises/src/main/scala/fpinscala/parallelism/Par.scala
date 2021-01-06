@@ -55,7 +55,7 @@ object Par {
   }
 
   // 7.5
-  def sequence[A](ps: List[Par[A]]): Par[List[A]] = ps.foldRight(unit(List()): Par[List[A]])((a1, a2) => map2(a1, a2)((a, la) => a :: la))
+  def sequence[A](ps: List[Par[A]]): Par[List[A]] = ps.foldRight(unit(List.empty[A]))((pa, pas) => map2(pa, pas)((a, as) => a :: as))
 
   def parMap[A,B](ps: List[A])(f: A => B): Par[List[B]] = fork {
     val fbs: List[Par[B]] = ps.map(asyncF(f))
@@ -66,7 +66,7 @@ object Par {
     (es: ExecutorService) => {
       val af = a(es)
       val bf = b(es)
-      Map2Future(af, bf, f) // This implementation of `map2` does _not_ respect timeouts, and eagerly waits for the returned futures. This means that even if you have passed in "forked" arguments, using this map2 on them will make them wait. It simply passes the `ExecutorService` on to both `Par` values, waits for the results of the Futures `af` and `bf`, applies `f` to them, and wraps them in a `UnitFuture`. In order to respect timeouts, we'd need a new `Future` implementation that records the amount of time spent evaluating `af`, then subtracts that time from the available time allocated for evaluating `bf`.
+      Map2Future(af, bf, f)
     }
 
   // 7.6
@@ -75,6 +75,15 @@ object Par {
     map(sequence(lpl))(l => l.flatten)
   }
 
+  def parFilter2[A](l: List[A])(f: A => Boolean): Par[List[A]] = l match {
+    case Nil => unit(Nil)
+    case head :: tl =>
+      val ph = lazyUnit {
+        if (f(head)) List(head) else Nil
+      }
+      val pt = parFilter2(tl)(f)
+      map2(ph, pt)(_ ::: _)
+  }
   
   def fork[A](a: => Par[A]): Par[A] = // This is the simplest and most natural implementation of `fork`, but there are some problems with it--for one, the outer `Callable` will block waiting for the "inner" task to complete. Since this blocking occupies a thread in our thread pool, or whatever resource backs the `ExecutorService`, this implies that we're losing out on some potential parallelism. Essentially, we're using two threads when one should suffice. This is a symptom of a more serious problem with the implementation, and we will discuss this later in the chapter.
     es => es.submit(new Callable[A] { 
@@ -99,10 +108,10 @@ object Par {
 //      else f(es)
 
   // 7.11
-  def choiceN[A](n: Par[Int])(choices: List[Par[A]]): Par[A] = {
+  def choiceN[A](pn: Par[Int])(choices: List[Par[A]]): Par[A] = {
     es =>
-      val choice = (run(es)(n).get)
-      choices(choice)(es)
+      val n = (run(es)(pn).get)
+      choices(n)(es)
   }
 
   // 7.11 choice in terms of choiceN
@@ -126,11 +135,11 @@ object Par {
   }
 
   // 7.13
-  def chooserChoice[A](cond: Par[Boolean])(t: Par[A], f: Par[A]): Par[A] = flatMap(cond)(b => if (b) t else f)
+  def flatMapChoice[A](cond: Par[Boolean])(t: Par[A], f: Par[A]): Par[A] = flatMap(cond)(b => if (b) t else f)
 
 
   // 7.13
-  def chooserChoiceN[A](n: Par[Int])(choices: List[Par[A]]): Par[A] = flatMap(n)(i => choices(i))
+  def flatMapChoiceN[A](n: Par[Int])(choices: List[Par[A]]): Par[A] = flatMap(n)(i => choices(i))
 
   // 7.14
   def join[A](a: Par[Par[A]]): Par[A] = { es => run(es)(a(es).get()) }
@@ -149,7 +158,8 @@ object Par {
 
   class ParOps[A](p: Par[A]) {
 
-
+    def flatMap[B](f: A => Par[B]): Par[B] = Par.flatMap(p)(f)
+    def map[B](f: A => B): Par[B] = Par.map(p)(f)
   }
 }
 
@@ -161,6 +171,14 @@ object Examples {
     else { 
       val (l,r) = ints.splitAt(ints.length/2) // Divide the sequence in half using the `splitAt` function.
       sum(l) + sum(r) // Recursively sum both halves and add the results together.
+    }
+
+  def sum2(ints: Vector[Int]): Par[Int] =
+    if (ints.size <= 1)
+      Par.unit(ints.headOption getOrElse 0)
+    else {
+      val (l, r) = ints.splitAt(ints.length/2)
+      Par.map2(sum2(l),sum2(r))(_ + _)
     }
 
 }
